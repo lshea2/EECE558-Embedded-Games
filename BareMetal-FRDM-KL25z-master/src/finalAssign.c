@@ -1,5 +1,3 @@
-/* Final Assignment EECE 558: A long press of the push button switches games. 1st Game: Reaction Time Tester. 2nd Game: Simon Says. Connect to minicom for information display */
-/* Lucas Shea, Binghamton University */
 #include "systick.h"
 #include "copwdt.h"
 #include "rgbled.h"
@@ -239,6 +237,8 @@ void simon_says_game() {
 	static uint16_t simon_says_game_ms_cntr = 0;
 	static uint16_t simon_says_display_total_time_ms_cntr = 0;
 	static uint16_t simon_says_display_total_time = 0;
+	static uint8_t uart_input;
+	static enum COLORS uart_input_color;
 	static uint16_t scan_result = 0;
 	static uint8_t colors_array_index = 0;
 	static uint8_t current_display_index = 0;
@@ -299,7 +299,63 @@ void simon_says_game() {
 				set_rgbled_color_to(LED_MIN_BRIGHTNESS, LED_MIN_BRIGHTNESS, LED_MIN_BRIGHTNESS);
 			}
 			if(simon_says_game_ms_cntr > 750 && simon_says_game_ms_cntr < 2250) {
-				if(tsi0_scan_is_complete()) {
+				if(get_byte_from_uart0(&uart_input)) {
+					if(uart_input == 'r') {
+						uart_input_color = RED;
+					}
+					else if(uart_input == 'g') {
+						uart_input_color = GREEN;
+					}
+					else if(uart_input == 'b') {
+						uart_input_color = BLUE;
+					}
+					if(uart_input_color == rand_colors[current_display_index]) {
+						current_display_index++;
+						simon_says_game_ms_cntr = 0;
+						break;
+					}
+					else {
+						colors_array_index = 0;
+						current_display_index = 0;
+						simon_says_game_ms_cntr = 0;
+						print_string("YOU LOSE!");
+						send_byte_to_uart0(NEWLINE1);
+						send_byte_to_uart0(NEWLINE2);
+						simon_says_state = ST_PICK_NEXT_COLOR;
+						break;
+					}
+				}
+				turn_off_rgbled();
+			}
+			if(simon_says_game_ms_cntr >= 2250) {
+				turn_off_rgbled();
+				colors_array_index = 0;
+				current_display_index = 0;
+				simon_says_game_ms_cntr = 0;
+				print_string("YOU LOSE!");
+				send_byte_to_uart0(NEWLINE1);
+				send_byte_to_uart0(NEWLINE2);
+				simon_says_state = ST_PICK_NEXT_COLOR;
+				break;
+			}
+			simon_says_game_ms_cntr++;
+			break;
+		case ST_WIN_GAME:
+			print_string("CONGRATS! YOU WIN!");
+			send_byte_to_uart0(NEWLINE1);
+			send_byte_to_uart0(NEWLINE2);
+			simon_says_game_ms_cntr = 0;
+			colors_array_index = 0;
+			current_display_index = 0;
+			simon_says_state = ST_PICK_NEXT_COLOR;
+			break;
+		
+	}
+	
+}
+
+/*
+if(tsi0_scan_is_complete()) {
 					scan_result = tsi0_get_scan_result();
 				}
 				if(!(tsi0_scan_is_in_progress())) {
@@ -330,41 +386,4 @@ void simon_says_game() {
 				if(scan_result_color > scan_result_highest_ranked_color) {
 					scan_result_highest_ranked_color = scan_result_color;
 				}
-			}
-			if(simon_says_game_ms_cntr >= 2250) {
-				turn_off_rgbled();
-				if(scan_result_highest_ranked_color == rand_colors[current_display_index]) {
-					current_display_index++;
-					scan_result_color = RED;
-					scan_result_highest_ranked_color = RED;
-					simon_says_game_ms_cntr = 0;
-					break;
-				}
-				else {
-					colors_array_index = 0;
-					current_display_index = 0;
-					scan_result_color = RED;
-					scan_result_highest_ranked_color = RED;
-					simon_says_game_ms_cntr = 0;
-					print_string("YOU LOSE!");
-					send_byte_to_uart0(NEWLINE1);
-					send_byte_to_uart0(NEWLINE2);
-					simon_says_state = ST_PICK_NEXT_COLOR;
-					break;
-				}
-			}
-			simon_says_game_ms_cntr++;
-			break;
-		case ST_WIN_GAME:
-			print_string("CONGRATS! YOU WIN!");
-			send_byte_to_uart0(NEWLINE1);
-			send_byte_to_uart0(NEWLINE2);
-			simon_says_game_ms_cntr = 0;
-			colors_array_index = 0;
-			current_display_index = 0;
-			simon_says_state = ST_PICK_NEXT_COLOR;
-			break;
-		
-	}
-	
-}
+*/
