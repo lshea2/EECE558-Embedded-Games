@@ -1,5 +1,3 @@
-/* Test File: Output on RGBLED is based on input from accelerometer */
-/* Lucas Shea, Binghamton University */
 #include <stdint.h>
 #include <stdbool.h>
 #include "rgbled.h"

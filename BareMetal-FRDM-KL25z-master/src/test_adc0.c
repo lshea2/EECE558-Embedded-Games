@@ -1,5 +1,3 @@
-/*  */
-/* Lucas Shea, Binghamton University */
 #include "systick.h"
 #include "rgbled.h"
 #include "adc0.h"

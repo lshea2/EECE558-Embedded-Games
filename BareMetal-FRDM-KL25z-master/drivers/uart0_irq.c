@@ -1,5 +1,3 @@
-/* Implementation of driver for the UART0 on the FRDM-KL25Z development board using Interrupts*/
-/* Lucas Shea, Binghamton University */
 #include "uart0_irq.h"
 #include <MKL25Z4.h>
 #include <stdbool.h>
@@ -8,7 +6,7 @@
 #ifndef UART0_IRQ_PRIORITY
 	#define UART0_IRQ_PRIORITY 2
 #endif
-#define TXBUF_SIZE 32 // can be 2, 4, 8, 16, 32, 64, 128, 256
+#define TXBUF_SIZE 64 // can be 2, 4, 8, 16, 32, 64, 128, 256
 static uint8_t tx_buf[TXBUF_SIZE];
 static uint8_t tx_head, tx_tail;
 static uint8_t tx_head_next() {
@@ -68,6 +66,65 @@ void print_string(char *str) {
 	
 	while(*str) {
 		send_byte_to_uart0(*str++);
+	}
+	
+}
+
+void print_binary(uint16_t hexInput) {
+	
+	char array[16];
+	uint8_t temp = 0;
+	uint8_t counter = 15;
+	
+	while(hexInput != 0) {
+		
+		temp = (uint8_t)(hexInput & 0x01);
+		if(temp != 0) {
+			array[counter] = '1';
+		}
+		else if(temp == 0) {
+			array[counter] = '0';
+		}
+
+		hexInput = (hexInput>>1);
+		counter--;
+		
+	}
+	
+	while(counter != 0) {
+		array[counter] = '0';
+		counter--;
+	}
+	array[counter] = '0';
+	while(counter != 16) {
+		send_byte_to_uart0(array[counter]);
+		counter++;
+	}
+	
+}
+
+void print_decimal(uint16_t hexInput) {
+	
+	uint16_t temp = 0;
+	uint16_t temp2 = 0;
+	uint16_t mask = 0x8000;
+	uint16_t weighting = 32768;
+	uint8_t counter = 0;
+	uint16_t weighting_array[16] = {32760, 16380, 8190, 4090, 2040, 1020, 510, 250, 120, 60, 30, 10, 0, 0, 0, 0};
+	
+	while(counter <= 15) {
+		
+		temp = hexInput & mask;
+		temp2 += temp * weighting - weighting_array[counter]; 
+		
+		mask = (mask>>1);
+		weighting = (weighting>>1);
+		counter++;
+	}
+	
+	send_byte_to_uart0((uint8_t)(temp2%10));
+	if(temp2 == 0) {
+		send_byte_to_uart0('0');
 	}
 	
 }

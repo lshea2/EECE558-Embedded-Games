@@ -4,7 +4,7 @@
 #include "systick.h"
 #include "redled.h"
 #include "copwdt.h"
-#include "uart0.h"
+#include "uart0_irq.h"
 
 void main() {
 
